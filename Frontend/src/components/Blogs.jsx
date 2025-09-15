@@ -7,53 +7,61 @@ import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography'
 import axios from 'axios'
 import axiosInstance from '../axiosinterceptor'
-import { Navigate, useNavigate } from 'react-router-dom';
-
+import { useNavigate } from 'react-router-dom';
 
 const Blogs = () => {
   const [blogs, setBlogs] = useState([])
-  let token = localStorage.getItem('token')
+  const token = localStorage.getItem('token')
+  const navigate = useNavigate()
 
+  // ✅ Fetch all blogs
   useEffect(() => {
     axios.get("/blogs")
       .then((response) => {
-        setBlogs(response.data)
-
+        if (response.data.success) {
+          setBlogs(response.data.blogs)
+        } else {
+          console.error("No blogs found:", response.data.message)
+        }
       })
       .catch((error) => {
-        console.log("fetching data failed:", error)
+        console.error("fetching data failed:", error)
       })
   }, [])
 
-  
-
-
-  let navigate = useNavigate()
-  let updateblog = (blog) => {
+  // ✅ Navigate to update page with state
+  const updateBlog = (blog) => {
     navigate('/add', { state: { blog } })
   }
 
-
-  let deleteblog = (id) => {
+  // ✅ Delete blog
+  const deleteBlog = (id) => {
     axiosInstance.delete("/blogs/delete/" + id)
       .then((res) => {
-        window.location.reload()
-        alert("deleted successfully")
-
+        if (res.data.success) {
+          alert(res.data.message)
+          setBlogs((prev) => prev.filter(b => b._id !== id)) // remove from UI
+        } else {
+          alert("Delete failed: " + res.data.message)
+        }
       })
-      .catch(err)
-    console.log(err)
+      .catch((err) => console.error(err))
   }
 
   return (
-
-    <div style={{ display: 'flex', flexDirection: "row", flexWrap: "wrap", gap: "1rem", marginTop: "15px", justifyContent: "center" }}>
-
+    <div style={{
+      display: 'flex',
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: "1rem",
+      marginTop: "15px",
+      justifyContent: "center"
+    }}>
       {blogs.map((blog, index) => (
         <Card key={index} sx={{ maxWidth: 400, width: "100%" }}>
           <CardMedia
             component="img"
-            alt="green iguana"
+            alt="blog image"
             height="250"
             image={blog.imageUrl}
           />
@@ -64,14 +72,13 @@ const Blogs = () => {
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               {blog.description}
             </Typography>
-
           </CardContent>
           <CardActions>
-            <Button  onClick={()=> navigate(`/${blog._id}`)} style={{ marginTop: "10px" }} size="small">Learn More</Button>
+            <Button onClick={() => navigate(`/${blog._id}`)} size="small">Learn More</Button>
             {token && (
               <>
-                <Button variant="contained" onClick={() => updateblog(blog)} style={{ backgroundColor: "lightseagreen" }}>EDIT</Button>
-                <Button variant="contained" onClick={() => deleteblog(blog._id)} style={{ backgroundColor: "#C8A34B" }}>DELETE</Button>
+                <Button variant="contained" onClick={() => updateBlog(blog)} style={{ backgroundColor: "lightseagreen" }}>EDIT</Button>
+                <Button variant="contained" onClick={() => deleteBlog(blog._id)} style={{ backgroundColor: "#C8A34B" }}>DELETE</Button>
               </>
             )}
           </CardActions>
