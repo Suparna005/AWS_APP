@@ -1,83 +1,79 @@
-const express = require('express');
-const jwt = require('jsonwebtoken');
-const router = express.Router();
-const blogmodel = require('../Models/blogmodel');
+const express = require('express')
+const jwt=require('jsonwebtoken')
+const router = express.Router('../routes/blogRoutes')
+const blogmodel = require('../Models/blogmodel')
+router.use(express.json())
 
-router.use(express.json());
+//adding middleware
 
-// 🔐 Middleware for token verification
-function verifyToken(req, res, next) {
-  const token = req.headers.token;
-  try {
-    if (!token) throw 'Unauthorized Access';
-    const payload = jwt.verify(token, "secret");
-    if (!payload) throw 'Unauthorized Access';
-    next();
-  } catch (err) {
-    return res.status(401).json({ success: false, message: err });
-  }
+function verifyToken(req,res,next){
+let token=req.headers.token
+try{
+    if(!token)throw 'Unauthorized Access'
+    let payload=jwt.verify(token,"secret")
+    if(!payload) throw 'Unauthorized Access'
+    next()
+
+}catch(err){
+    res.json({message:err})
+
 }
-
-// ✅ Get all blogs
+}
 router.get('/', async (req, res) => {
-  try {
-    const apps = await blogmodel.find();
-    res.status(200).json({ success: true, blogs: apps });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: "Failed to fetch blogs" });
-  }
-});
+    try {
+        const apps = await blogmodel.find()
+        res.status(200).send(apps)
+    }
+    catch  (error) {
+        console.error(error)
+        res.status(400).send("failed to fetch blogs....")
+    }
+})
 
-// ✅ Get single blog by ID
 router.get('/:id', async (req, res) => {
   try {
-    const blogdetails = await blogmodel.findById(req.params.id);
+    const blogdetails = await blogmodel.findById(req.params.id); 
     if (!blogdetails) {
-      return res.status(404).json({ success: false, message: 'Blog not found' });
+      return res.status(404).json({ error: 'Blog not found' });
     }
-    res.status(200).json({ success: true, blog: blogdetails });
+    res.json(blogdetails);
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Failed to fetch blog details' });
+    res.status(500).json({ error: 'Failed to fetch blog details' });
   }
-});
+})
+router.post('/add',verifyToken, async (req, res) => {
+    try {
+        const newBlog = new blogmodel(req.body)
+        await newBlog.save()
+        res.json(newBlog)
+       res.status(201).json({ message: "Blog added successfully", blog: newBlog })
 
-// ✅ Add new blog
-router.post('/add', verifyToken, async (req, res) => {
-  try {
-    const newBlog = new blogmodel(req.body);
-    await newBlog.save();
-    res.status(201).json({ success: true, message: "Blog added successfully", blog: newBlog });
-  } catch (err) {
-    res.status(400).json({ success: false, message: "Failed to add blog" });
-  }
-});
-
-// ✅ Update blog
-router.put('/update/:id', verifyToken, async (req, res) => {
-  try {
-    const updatedBlog = await blogmodel.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!updatedBlog) {
-      return res.status(404).json({ success: false, message: "Blog not found" });
     }
-    res.status(200).json({ success: true, message: "Blog updated successfully", blog: updatedBlog });
-  } catch (err) {
-    res.status(400).json({ success: false, message: "Failed to update blog" });
-  }
-});
-
-// ✅ Delete blog
-router.delete('/delete/:id', verifyToken, async (req, res) => {
-  try {
-    const deletedBlog = await blogmodel.findByIdAndDelete(req.params.id);
-    if (!deletedBlog) {
-      return res.status(404).json({ success: false, message: "Blog not found" });
+    catch (err) {
+        res.status(400).send("failed to add blog....")
     }
-    res.status(200).json({ success: true, message: "Blog deleted successfully" });
-  } catch (error) {
-    console.error(error);
-    res.status(400).json({ success: false, message: 'Failed to delete blog' });
-  }
-});
+})
+router.put('/update/:id',verifyToken, async (req, res) => {
+    try {
+      const data= await blogmodel.findByIdAndUpdate(req.params.id,req.body)
+        res.status(200).send({ message: "Blog is updated...." })
+    }
+    catch (err) {
+        res.status(400).send("failed to update blog....")
+    }
+})
+router.delete('/delete/:id',verifyToken, async (req, res) => {
+    try {
+        await blogmodel.findByIdAndDelete(req.params.id)
+        res.status(200).send({ message: "Blog deleted...." })
+    }
+    catch (error) {
+        console.error(error)
+    res.status(400).json({ message: "Failed to delete blog" })
 
-module.exports = router;
+    }
+})
+
+
+
+module.exports = router
