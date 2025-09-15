@@ -1,32 +1,27 @@
-import React, { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
-import axios from 'axios'
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import axios from "axios";
 
-const BlogDetails = () => {
-  const { id } = useParams()
-  const [blog, setBlog] = useState(null)
+const BlogDetail = () => {
+  const { id } = useParams();  // get blog id from URL
+  const [blog, setBlog] = useState(null);
 
   useEffect(() => {
-    axios.get(`/blogs/${id}`)
-      .then((res) => {
-        if (res.data.success) {
-          setBlog(res.data.blog)
-        } else {
-          console.error(res.data.message)
-        }
-      })
-      .catch(err => console.error(err))
-  }, [id])
+    axios.get(`/api/blogs/${id}`)
+      .then((res) => setBlog(res.data))
+      .catch((err) => console.error("Error fetching blog:", err));
+  }, [id]);
 
-  if (!blog) return <h2>Loading...</h2>
+  if (!blog) return <h2 style={{ textAlign: "center", marginTop: "2rem" }}>Loading...</h2>;
 
   return (
-    <div style={{ margin: "20px", textAlign: "center" }}>
-      <h1>{blog.title}</h1>
-      <img src={blog.imageUrl} alt={blog.title} width="400" />
-      <p>{blog.description}</p>
+    <div style={{ maxWidth: "800px", margin: "2rem auto", textAlign: "center" }}>
+      <h2 style={{ color: "#AA8736" }}>{blog.title}</h2>
+      <img src={blog.imageUrl} alt={blog.title} style={{ width: "50%",borderRadius: "8px" }} />
+      <p style={{ marginTop: "1rem", fontSize: "18px", lineHeight: "1.6" }}>{blog.description}</p>
+      {blog.content && <p style={{ marginTop: "1rem" }}>{blog.content}</p>}
     </div>
-  )
-}
+  );
+};
 
-export default BlogDetails
+export default BlogDetail;

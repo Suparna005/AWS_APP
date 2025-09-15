@@ -1,66 +1,106 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
+import Box from '@mui/material/Box'
+import TextField from '@mui/material/TextField'
+import Button from '@mui/material/Button'
 import { useLocation, useNavigate } from 'react-router-dom'
+import axios from 'axios'
 import axiosInstance from '../axiosinterceptor'
+import { useEffect } from 'react'
 
-const AddBlog = () => {
-  const location = useLocation()
-  const navigate = useNavigate()
-  const editingBlog = location.state?.blog || null
 
+const Addblog = () => {
   const [form, setForm] = useState({
-    title: "",
-    description: "",
-    imageUrl: ""
+    title: '',
+    description: '',
+    imageUrl: '',
+    content:''
   })
+  const navigate = useNavigate()
 
+  function submitValue(e) {
+    if (location.state != null) {
+      axiosInstance.put('/blogs/update/' + location.state.blog._id,form)
+        .then((res) => {
+          console.log('Form Submitted..', response.data)
+          alert("Blog updated successfully")
+          navigate('/')
+        })
+            .catch((error) => {
+              console.error(error)
+            })
+        
+    } else {
+      // e.preventDefault()
+
+      //adding for a new blog
+      axiosInstance.post('/blogs/add', form)
+        .then((response) => {
+          console.log('Form Submitted..', response.data)
+          alert("Blog added successfully")
+          navigate('/')
+        })
+        .catch((err) => {
+          console.error(err)
+        })
+    }
+  }
+
+  //to track the current location,use uselocation
+  let location = useLocation()
   useEffect(() => {
-    if (editingBlog) {
+    if (location.state != null) {
       setForm({
-        title: editingBlog.title,
-        description: editingBlog.description,
-        imageUrl: editingBlog.imageUrl
+        ...form,
+        title: location.state.blog.title,
+        description: location.state.blog.description,
+        imageUrl: location.state.blog.imageUrl,
+        content:location.state.blog.content
+
       })
     }
-  }, [editingBlog])
-
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value })
-  }
-
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    if (editingBlog) {
-      // ✅ Update blog
-      axiosInstance.put(`/blogs/update/${editingBlog._id}`, form)
-        .then(res => {
-          if (res.data.success) {
-            alert(res.data.message)
-            navigate('/')
-          }
-        })
-        .catch(err => console.error(err))
-    } else {
-      // ✅ Add new blog
-      axiosInstance.post("/blogs/add", form)
-        .then(res => {
-          if (res.data.success) {
-            alert(res.data.message)
-            navigate('/')
-          }
-        })
-        .catch(err => console.error(err))
-    }
-  }
+  }, [])
 
   return (
-    <form onSubmit={handleSubmit} style={{ margin: "20px" }}>
-      <h2>{editingBlog ? "Edit Blog" : "Add Blog"}</h2>
-      <input type="text" name="title" value={form.title} onChange={handleChange} placeholder="Title" required /><br />
-      <textarea name="description" value={form.description} onChange={handleChange} placeholder="Description" required /><br />
-      <input type="text" name="imageUrl" value={form.imageUrl} onChange={handleChange} placeholder="Image URL" required /><br />
-      <button type="submit">{editingBlog ? "Update" : "Add"}</button>
-    </form>
+    <div style={{ textAlign: "center", marginTop: "50px" }}>
+      <h2 style={{ color: "#AA8736" }}>ADD BLOGS</h2>
+      <Box
+        component="form"
+        onSubmit={submitValue}
+        sx={{ '& > :not(style)': { m: 1, width: '70ch' } }}
+        noValidate
+        autoComplete="off"
+      >
+        <TextField required
+          id="title"
+          label="Title"
+          value={form.title}
+          onChange={(e) => setForm({ ...form, title: e.target.value })}
+          variant="outlined" /><br />
+
+        <TextField required
+          id="description"
+          label="Description"
+          value={form.description}
+          onChange={(e) => setForm({ ...form, description: e.target.value })}
+          variant="outlined" /><br />
+
+        <TextField required
+          id="imageUrl"
+          label="ImageUrl"
+          value={form.imageUrl}
+          onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
+          variant="outlined" /><br /><br />
+
+          <TextField required
+          id="content"
+          label="Content"
+          value={form.content}
+          onChange={(e) => setForm({ ...form, content: e.target.value })}
+          variant="outlined" /><br /><br />
+        <Button variant="contained" type='submit' style={{ backgroundColor: "#AA8736", height: "50px" }}>ADD BLOGS</Button>
+      </Box>
+    </div>
   )
 }
 
-export default AddBlog
+export default Addblog
