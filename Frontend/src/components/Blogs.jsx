@@ -17,7 +17,7 @@ const Blogs = () => {
   useEffect(() => {
   axios.get("/blogs")
     .then((response) => {
-      setBlogs(Array.isArray(response.data) ? response.data : [])
+      setBlogs((response.data))
     })
     .catch((error) => {
       console.error("fetching data failed:", error)
